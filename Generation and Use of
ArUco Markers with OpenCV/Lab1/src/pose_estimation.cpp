@@ -1,61 +1,110 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/aruco.hpp>
 #include <iostream>
+#include <string>
+#include <map>
 
 int main(int argc, char** argv) {
+    // According to documentation, the program requires 4 arguments:
+    // 1. Dictionary (string) - e.g., "DICT_6X6_250"
+    // 2. Marker ID (int) - The specific ID to track
+    // 3. Marker side length in meters (float)
+    // 4. Calibration file (string) - Path to the .yml file
     if (argc < 5) {
-        std::cerr << "Usage: " << argv[0] << " <dict_name> <marker_id> <marker_len_m> <calib.yml>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <dictionary> <marker_id> <marker_length_m> <calib.yml>" << std::endl;
         return -1;
     }
 
-    // Load camera calibration data from file
+    std::string dictName = argv[1];
+    int targetId = std::stoi(argv[2]);
+    float markerLength = std::stof(argv[3]);
+    std::string calibFile = argv[4];
+
+    // 1. Load camera calibration parameters from the .yml file
     cv::Mat camMatrix, distCoeffs;
-    cv::FileStorage fs(argv[4], cv::FileStorage::READ);
+    cv::FileStorage fs(calibFile, cv::FileStorage::READ);
+    if (!fs.isOpened()) {
+        std::cerr << "Could not open calibration file: " << calibFile << std::endl;
+        return -1;
+    }
     fs["camera_matrix"] >> camMatrix;
     fs["distortion_coefficients"] >> distCoeffs;
+    fs.release();
 
-    // Load ArUco dictionary (currently using original dictionary)
-    cv::Ptr<cv::aruco::Dictionary> dict = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_ARUCO_ORIGINAL);
+    // 2. ArUco Setup
+    // Mapping string names to OpenCV ArUco dictionary constants
+    std::map<std::string, int> dictMap = {
+        {"DICT_4X4_50", 0}, {"DICT_4X4_100", 1}, {"DICT_4X4_250", 2}, {"DICT_4X4_1000", 3},
+        {"DICT_5X5_50", 4}, {"DICT_5X5_100", 5}, {"DICT_5X5_250", 6}, {"DICT_5X5_1000", 7},
+        {"DICT_6X6_50", 8}, {"DICT_6X6_100", 9}, {"DICT_6X6_250", 10}, {"DICT_6X6_1000", 11},
+        {"DICT_ARUCO_ORIGINAL", 16}
+    };
 
-    // Open default camera
-    cv::VideoCapture cap(0);
+    if (dictMap.find(dictName) == dictMap.end()) {
+        std::cerr << "Error: Dictionary " << dictName << " not found!" << std::endl;
+        return -1;
+    }
 
-    while (cap.grab()) {
-        cv::Mat img, imgCopy;
-        cap.retrieve(img);
-        img.copyTo(imgCopy);
+    cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(dictMap[dictName]);
+    cv::Ptr<cv::aruco::DetectorParameters> params = cv::aruco::DetectorParameters::create();
+
+    // 3. Open Video Stream from Camera
+    cv::VideoCapture inputVideo(0);
+    if (!inputVideo.isOpened()) {
+        std::cerr << "Could not open camera." << std::endl;
+        return -1;
+    }
+
+    std::cout << "Starting Pose Estimation for ID: " << targetId << ". Press 'q' to quit." << std::endl;
+
+    while (inputVideo.grab()) {
+        cv::Mat image, imageCopy;
+        inputVideo.retrieve(image);
+        image.copyTo(imageCopy);
 
         std::vector<int> ids;
         std::vector<std::vector<cv::Point2f>> corners;
 
-        // Detect markers in the image
-        cv::aruco::detectMarkers(img, dict, corners, ids);
+        // Detect markers in the current frame
+        cv::aruco::detectMarkers(image, dictionary, corners, ids, params);
 
         if (ids.size() > 0) {
+            // Pose Estimation: returns rotation vectors (rvecs) and translation vectors (tvecs)
             std::vector<cv::Vec3d> rvecs, tvecs;
+            cv::aruco::estimatePoseSingleMarkers(corners, markerLength, camMatrix, distCoeffs, rvecs, tvecs);
 
-            // Estimate pose of each detected marker
-            cv::aruco::estimatePoseSingleMarkers(corners, std::stof(argv[3]), camMatrix, distCoeffs, rvecs, tvecs);
+            for (size_t i = 0; i < ids.size(); i++) {
+                // Only process/draw if it matches the target ID requested from the command line
+                if (ids[i] == targetId) {
+                    // Draw basic bounding box and ID
+                    cv::aruco::drawDetectedMarkers(imageCopy, corners, ids);
 
-            for (int i = 0; i < ids.size(); i++) {
-                if (ids[i] == std::stoi(argv[2])) {
-                    // Draw coordinate axes on the marker
-                    cv::drawFrameAxes(imgCopy, camMatrix, distCoeffs, rvecs[i], tvecs[i], 0.1);
+                    // Draw 3D coordinate axes (Red: X, Green: Y, Blue: Z)
+                    // Axis length is set to 0.1m (10cm)
+                    cv::drawFrameAxes(imageCopy, camMatrix, distCoeffs, rvecs[i], tvecs[i], 0.1);
+
+                    // Extract X, Y, Z coordinates from the translation vector (tvecs)
+                    double x = tvecs[i][0];
+                    double y = tvecs[i][1];
+                    double z = tvecs[i][2];
+
+                    // Create text string to display coordinates
+                    std::string coords = "X: " + std::to_string(x).substr(0, 5) + 
+                                         " Y: " + std::to_string(y).substr(0, 5) + 
+                                         " Z: " + std::to_string(z).substr(0, 5);
+
+                    // Overlay coordinates onto the video (positioned near the marker corner)
+                    cv::putText(imageCopy, coords, corners[i][0], 
+                                cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 255, 0), 2);
                     
-                    // Display X, Y, Z translation values
-                    std::string text = "X: " + std::to_string(tvecs[i][0]) +
-                                       " Y: " + std::to_string(tvecs[i][1]) +
-                                       " Z: " + std::to_string(tvecs[i][2]);
-                    cv::putText(imgCopy, text, cv::Point(10, 50), cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 255, 0), 2);
+                    // Log to terminal for debugging
+                    std::cout << "Marker ID " << targetId << " Position -> " << coords << "\r" << std::flush;
                 }
             }
         }
 
-        // Show the result image with axes and text
-        cv::imshow("Pose Estimation", imgCopy);
-
-        // Exit if 'q' is pressed
-        if (cv::waitKey(30) == 'q') break;
+        cv::imshow("Pose Estimation", imageCopy);
+        if (cv::waitKey(1) == 'q') break;
     }
 
     return 0;

@@ -1,3 +1,0 @@
-/home/huy/Example/build1/CMakeFiles/example.dir
-/home/huy/Example/build1/CMakeFiles/edit_cache.dir
-/home/huy/Example/build1/CMakeFiles/rebuild_cache.dir

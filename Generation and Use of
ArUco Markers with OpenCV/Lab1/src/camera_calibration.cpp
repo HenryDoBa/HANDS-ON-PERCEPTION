@@ -42,10 +42,10 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    // Vectors lưu dữ liệu calibration
-    std::vector<std::vector<cv::Point2f>> allCorners; // mỗi marker là 1 vector<Point2f>
-    std::vector<int> allIds;                           // id tương ứng với mỗi marker
-    std::vector<int> markerCounterPerFrame;           // số marker mỗi frame
+    // Vectors to store calibration data
+    std::vector<std::vector<cv::Point2f>> allCorners; // each marker is a vector<Point2f>
+    std::vector<int> allIds;                           // corresponding id for each marker
+    std::vector<int> markerCounterPerFrame;           // number of markers per frame
     cv::Size imgSize;
 
     std::cout << "Press 'c' to capture, 's' to save, 'q' to quit." << std::endl;
@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
         char key = (char)cv::waitKey(10);
 
         if (key == 'c' && !ids.empty()) {
-            // Lưu từng marker vào allCorners và allIds
+            // Store each marker into allCorners and allIds
             for (size_t i = 0; i < corners.size(); i++) {
                 allCorners.push_back(corners[i]);
                 allIds.push_back(ids[i]);
