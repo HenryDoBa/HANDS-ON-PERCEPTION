@@ -5,22 +5,13 @@
 #include <map>
 
 int main(int argc, char** argv) {
-    // According to documentation, the program requires 4 arguments:
-    // 1. Dictionary (string) - e.g., "DICT_6X6_250"
-    // 2. Marker ID (int) - The specific ID to track
-    // 3. Marker side length in meters (float)
-    // 4. Calibration file (string) - Path to the .yml file
-    if (argc < 5) {
-        std::cerr << "Usage: " << argv[0] << " <dictionary> <marker_id> <marker_length_m> <calib.yml>" << std::endl;
-        return -1;
-    }
 
     std::string dictName = argv[1];
     int targetId = std::stoi(argv[2]);
     float markerLength = std::stof(argv[3]);
     std::string calibFile = argv[4];
 
-    // 1. Load camera calibration parameters from the .yml file
+    //Load camera calibration parameters from the .yml file
     cv::Mat camMatrix, distCoeffs;
     cv::FileStorage fs(calibFile, cv::FileStorage::READ);
     if (!fs.isOpened()) {
@@ -31,8 +22,6 @@ int main(int argc, char** argv) {
     fs["distortion_coefficients"] >> distCoeffs;
     fs.release();
 
-    // 2. ArUco Setup
-    // Mapping string names to OpenCV ArUco dictionary constants
     std::map<std::string, int> dictMap = {
         {"DICT_4X4_50", 0}, {"DICT_4X4_100", 1}, {"DICT_4X4_250", 2}, {"DICT_4X4_1000", 3},
         {"DICT_5X5_50", 4}, {"DICT_5X5_100", 5}, {"DICT_5X5_250", 6}, {"DICT_5X5_1000", 7},
@@ -40,22 +29,16 @@ int main(int argc, char** argv) {
         {"DICT_ARUCO_ORIGINAL", 16}
     };
 
-    if (dictMap.find(dictName) == dictMap.end()) {
-        std::cerr << "Error: Dictionary " << dictName << " not found!" << std::endl;
-        return -1;
-    }
-
     cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(dictMap[dictName]);
     cv::Ptr<cv::aruco::DetectorParameters> params = cv::aruco::DetectorParameters::create();
 
-    // 3. Open Video Stream from Camera
     cv::VideoCapture inputVideo(0);
     if (!inputVideo.isOpened()) {
         std::cerr << "Could not open camera." << std::endl;
         return -1;
     }
 
-    std::cout << "Starting Pose Estimation for ID: " << targetId << ". Press 'q' to quit." << std::endl;
+    std::cout << "Starting Pose Estimation for ID: " << targetId << ". Press ESC to quit." << std::endl;
 
     while (inputVideo.grab()) {
         cv::Mat image, imageCopy;
@@ -104,7 +87,7 @@ int main(int argc, char** argv) {
         }
 
         cv::imshow("Pose Estimation", imageCopy);
-        if (cv::waitKey(1) == 'q') break;
+        if (cv::waitKey(1) == 27) break;
     }
 
     return 0;

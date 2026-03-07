@@ -7,18 +7,13 @@
 #include <cmath>
 
 int main(int argc, char** argv) {
-    if (argc < 6) {
-        std::cerr << "Usage: " << argv[0] << " <dict_name> <id1> <id2> <marker_len_m> <calib.yml>" << std::endl;
-        return -1;
-    }
-
     std::string dictName = argv[1];
     int id1 = std::stoi(argv[2]);          // First target marker ID
     int id2 = std::stoi(argv[3]);          // Second target marker ID
     float markerLength = std::stof(argv[4]); // Marker side length in meters
     std::string calibFile = argv[5];       // Camera calibration file
 
-    // 1. Load camera calibration data
+    //Load camera calibration data
     cv::Mat camMatrix, distCoeffs;
     cv::FileStorage fs(calibFile, cv::FileStorage::READ);
     if (!fs.isOpened()) {
@@ -29,7 +24,6 @@ int main(int argc, char** argv) {
     fs["distortion_coefficients"] >> distCoeffs;
     fs.release();
 
-    // 2. Setup ArUco dictionary and detector parameters
     std::map<std::string, int> dictMap = {
         {"DICT_4X4_50", 0}, {"DICT_4X4_100", 1}, {"DICT_4X4_250", 2}, {"DICT_4X4_1000", 3},
         {"DICT_5X5_50", 4}, {"DICT_5X5_100", 5}, {"DICT_5X5_250", 6}, {"DICT_5X5_1000", 7},
@@ -40,7 +34,7 @@ int main(int argc, char** argv) {
     cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(dictMap[dictName]);
     cv::Ptr<cv::aruco::DetectorParameters> params = cv::aruco::DetectorParameters::create();
 
-    cv::VideoCapture inputVideo(0);  // Open default camera
+    cv::VideoCapture inputVideo(0); 
 
     while (inputVideo.grab()) {
         cv::Mat image, imageCopy;
@@ -97,7 +91,7 @@ int main(int argc, char** argv) {
 
         // Show the frame with distance visualization
         cv::imshow("Distance Estimation", imageCopy);
-        if (cv::waitKey(1) == 'q') break;
+        if (cv::waitKey(1) == 27) break;
     }
     return 0;
 }
