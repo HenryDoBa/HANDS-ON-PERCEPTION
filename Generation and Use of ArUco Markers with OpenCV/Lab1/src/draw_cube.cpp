@@ -6,17 +6,13 @@
 #include <map>
 
 int main(int argc, char** argv) {
-    if (argc < 5) {
-        std::cerr << "Usage: " << argv[0] << " <dict_name> <marker_id> <marker_len_m> <calib.yml>" << std::endl;
-        return -1;
-    }
-
+    
     std::string dictName = argv[1];
     int targetId = std::stoi(argv[2]);
     float markerLength = std::stof(argv[3]);
     std::string calibFile = argv[4];
 
-    // 1. Load Camera Calibration Data
+    //Load Camera Calibration Data
     cv::Mat camMatrix, distCoeffs;
     cv::FileStorage fs(calibFile, cv::FileStorage::READ);
     if (!fs.isOpened()) {
@@ -27,7 +23,6 @@ int main(int argc, char** argv) {
     fs["distortion_coefficients"] >> distCoeffs;
     fs.release();
 
-    // 2. Setup ArUco
     std::map<std::string, int> dictMap = {
         {"DICT_4X4_50", 0}, {"DICT_4X4_100", 1}, {"DICT_4X4_250", 2}, {"DICT_4X4_1000", 3},
         {"DICT_5X5_50", 4}, {"DICT_5X5_100", 5}, {"DICT_5X5_250", 6}, {"DICT_5X5_1000", 7},
@@ -103,7 +98,7 @@ int main(int argc, char** argv) {
 
         // Show the augmented reality image
         cv::imshow("Augmented Reality - Cube", imageCopy);
-        if (cv::waitKey(1) == 'q') break;
+        if (cv::waitKey(1) == 27) break;
     }
     return 0;
 }

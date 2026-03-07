@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
     float markerLength = std::stof(argv[4]); 
     std::string calibFile = argv[5];       
 
-    // 1. Load camera calibration parameters
+    //Load camera calibration parameters
     cv::Mat camMatrix, distCoeffs;
     cv::FileStorage fs(calibFile, cv::FileStorage::READ);
     if (!fs.isOpened()) {
@@ -27,7 +27,6 @@ int main(int argc, char** argv) {
     fs["distortion_coefficients"] >> distCoeffs;
     fs.release();
 
-    // 2. ArUco Setup
     std::map<std::string, int> dictMap = {
         {"DICT_4X4_50", 0}, {"DICT_4X4_100", 1}, {"DICT_4X4_250", 2}, {"DICT_4X4_1000", 3},
         {"DICT_5X5_50", 4}, {"DICT_5X5_100", 5}, {"DICT_5X5_250", 6}, {"DICT_5X5_1000", 7},
@@ -43,7 +42,6 @@ int main(int argc, char** argv) {
     cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(dictMap[dictName]);
     cv::Ptr<cv::aruco::DetectorParameters> params = cv::aruco::DetectorParameters::create();
 
-    // 3. Open Video Stream
     cv::VideoCapture inputVideo(0);
     if (!inputVideo.isOpened()) {
         std::cerr << "Could not open camera." << std::endl;
@@ -70,7 +68,7 @@ int main(int argc, char** argv) {
                 if (ids[i] == id2) idx2 = i;
             }
 
-            // Only proceed if BOTH requested markers are visible
+            // Only proceed if both requested markers are visible
             if (idx1 != -1 && idx2 != -1) {
                 
                 // Draw green frame, red square, and ID for both markers
@@ -87,7 +85,6 @@ int main(int argc, char** argv) {
                 int idxL = (tvecs[idx1][0] < tvecs[idx2][0]) ? idx1 : idx2;
                 int idxR = (tvecs[idx1][0] < tvecs[idx2][0]) ? idx2 : idx1;
 
-                // --- Coordinate Transformation Math ---
                 cv::Mat R_L;
                 // Convert left marker's rotation vector into a 3x3 rotation matrix
                 cv::Rodrigues(rvecs[idxL], R_L); 
@@ -115,7 +112,7 @@ int main(int argc, char** argv) {
         }
 
         cv::imshow("Relative Pose Estimation", imageCopy);
-        if (cv::waitKey(1) == 27) break; // Exit on ESC
+        if (cv::waitKey(1) == 27) break; 
     }
 
     return 0;

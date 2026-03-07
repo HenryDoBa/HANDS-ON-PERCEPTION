@@ -6,13 +6,7 @@
 #include <map>
 
 int main(int argc, char** argv) {
-    if (argc < 7) {
-        std::cerr << "Usage: " << argv[0] 
-                  << " <dict_name> <cols> <rows> <marker_m> <sep_m> <output.yml>" << std::endl;
-        return -1;
-    }
 
-    // Parse command line arguments
     std::string dictName = argv[1];
     int cols = std::stoi(argv[2]);
     int rows = std::stoi(argv[3]);
@@ -20,7 +14,6 @@ int main(int argc, char** argv) {
     float markerSep = std::stof(argv[5]);
     std::string outputFile = argv[6];
 
-    // Dictionary mapping
     std::map<std::string, int> dictMap = {
         {"DICT_4X4_50", 0}, {"DICT_4X4_100", 1}, {"DICT_4X4_250", 2}, {"DICT_4X4_1000", 3},
         {"DICT_5X5_50", 4}, {"DICT_5X5_100", 5}, {"DICT_5X5_250", 6}, {"DICT_5X5_1000", 7},
@@ -48,7 +41,7 @@ int main(int argc, char** argv) {
     std::vector<int> markerCounterPerFrame;           // number of markers per frame
     cv::Size imgSize;
 
-    std::cout << "Press 'c' to capture, 's' to save, 'q' to quit." << std::endl;
+    std::cout << "Press 'c' to capture, ESC to save and calibrate, 'q' to quit." << std::endl;
 
     while (true) {
         cv::Mat image, imageCopy;
@@ -76,7 +69,7 @@ int main(int argc, char** argv) {
             markerCounterPerFrame.push_back((int)ids.size());
             std::cout << "Captured frame " << markerCounterPerFrame.size() << std::endl;
         }
-        else if (key == 's') {
+        else if (key == 27) { 
             if (markerCounterPerFrame.size() < 15) {
                 std::cout << "Need at least 15 frames for calibration." << std::endl;
                 continue;

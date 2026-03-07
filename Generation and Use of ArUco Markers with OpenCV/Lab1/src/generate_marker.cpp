@@ -5,11 +5,6 @@
 #include <map>
 
 int main(int argc, char** argv) {
-    if (argc < 5) {
-        std::cerr << "Usage: " << argv[0] << " <dictionary_name> <marker_id> <size_px> <output.png>" << std::endl;
-        return -1;
-    }
-
     std::string dictName = argv[1];
     int markerId = std::stoi(argv[2]);
     int markerSize = std::stoi(argv[3]);
