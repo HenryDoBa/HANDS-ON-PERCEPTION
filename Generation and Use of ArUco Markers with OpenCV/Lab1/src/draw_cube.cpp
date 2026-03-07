@@ -73,10 +73,10 @@ int main(int argc, char** argv) {
                     cubePoints.push_back(cv::Point3f(-half, half, 0));
 
                     // Top face (raised by markerLength)
-                    cubePoints.push_back(cv::Point3f(-half, -half, -markerLength));
-                    cubePoints.push_back(cv::Point3f(half, -half, -markerLength));
-                    cubePoints.push_back(cv::Point3f(half, half, -markerLength));
-                    cubePoints.push_back(cv::Point3f(-half, half, -markerLength));
+                    cubePoints.push_back(cv::Point3f(-half, -half, markerLength));
+                    cubePoints.push_back(cv::Point3f(half, -half, markerLength));
+                    cubePoints.push_back(cv::Point3f(half, half, markerLength));
+                    cubePoints.push_back(cv::Point3f(-half, half, markerLength));
 
                     // Project 3D points to 2D image coordinates
                     std::vector<cv::Point2f> imgPoints;
